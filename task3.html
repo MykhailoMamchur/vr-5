@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task 3 - Object Placement</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a href="index.html" class="back-button">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5M12 19l-7-7 7-7"></path>
+    </svg>
+  </a>
+  
+  <div id="controls" class="controls">
+    <div class="controls-header">
+      <h2>Object Controls</h2>
+      <button id="toggleControlsBtn" class="toggle-button">Hide Controls</button>
+    </div>
+    <div class="controls-content">
+      <div class="control-row">
+        <label for="colorIndicator">Current Color:</label>
+        <div id="colorIndicator" style="height: 30px; border-radius: 4px; background-color: #00ff00;"></div>
+      </div>
+      <button id="changeColorBtn" class="toggle-button">Change Color</button>
+      <button id="toggleRotationBtn" class="toggle-button">Disable Rotation</button>
+      <div class="control-row">
+        <label for="scaleIndicator">Current Scale: 1.00</label>
+        <div id="scaleIndicator"></div>
+      </div>
+      <button id="changeSizeBtn" class="toggle-button">Change Size</button>
+      <button id="toggleScaleAnimationBtn" class="toggle-button">Disable Scale Animation</button>
+      <button id="changeMaterialBtn" class="toggle-button">Material: Metallic</button>
+    </div>
+  </div>
+  
+  <audio id="placeSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" preload="auto"></audio>
+
+  <script type="module" src="./js/task3.js"></script>
+</body>
+</html>

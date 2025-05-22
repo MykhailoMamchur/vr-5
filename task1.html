@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task 1 - Basic AR Scene</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a href="index.html" class="back-button">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5M12 19l-7-7 7-7"></path>
+    </svg>
+  </a>
+  
+  <div id="controls" class="controls">
+    <div class="controls-header">
+      <h2>Object Controls</h2>
+      <button id="toggleControlsBtn" class="toggle-button">Hide Controls</button>
+    </div>
+    <div class="controls-content">
+      <button id="toggleRotationBtn" class="toggle-button">Disable Rotation</button>
+      <button id="toggleColorBtn" class="toggle-button">Disable Color/Emit</button>
+      <button id="toggleTexturesBtn" class="toggle-button">Disable Textures</button>
+      <button id="togglePulseBtn" class="toggle-button">Disable Pulse/Move</button>
+      <button id="toggleSpeedBtn" class="toggle-button">Speed: Normal</button>
+      <button id="toggleDirectionBtn" class="toggle-button">Direction: Forward</button>
+      <button id="specialEffectBtn" class="toggle-button">Special Effect</button>
+    </div>
+  </div>
+
+  <script type="module" src="./js/task1.js"></script>
+</body>
+</html>

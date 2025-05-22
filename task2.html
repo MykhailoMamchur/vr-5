@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task 2 - GLTF Model</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a href="index.html" class="back-button">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5M12 19l-7-7 7-7"></path>
+    </svg>
+  </a>
+  
+  <div id="controls" class="controls">
+    <div class="controls-header">
+      <h2>Model Controls</h2>
+      <button id="toggleControlsBtn" class="toggle-button">Hide Controls</button>
+    </div>
+    <div class="controls-content">
+      <button id="toggleRotationBtn" class="toggle-button">Disable Rotation</button>
+      <div class="control-row">
+        <label for="rotationAxis">Rotation Axis:</label>
+        <select id="rotationAxis">
+          <option value="x">X Axis</option>
+          <option value="y" selected>Y Axis</option>
+          <option value="z">Z Axis</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label for="materialSelect">Material:</label>
+        <select id="materialSelect">
+          <option value="original" selected>Original</option>
+          <option value="gold">Gold</option>
+          <option value="silver">Silver</option>
+          <option value="emerald">Emerald</option>
+          <option value="glass">Glass</option>
+        </select>
+      </div>
+      <button id="toggleSceneLightBtn" class="toggle-button">Scene Light: On</button>
+      <button id="toggleModelLightBtn" class="toggle-button">Model Light: On</button>
+      <div class="control-row">
+        <label for="modelLightType">Light Type:</label>
+        <select id="modelLightType">
+          <option value="point" selected>Point Light</option>
+          <option value="spot">Spot Light</option>
+          <option value="directional">Directional Light</option>
+        </select>
+      </div>
+      <div class="control-row">
+        <label for="modelLightIntensity">Light Intensity:</label>
+        <input type="range" id="modelLightIntensity" min="0" max="10" step="0.1" value="5">
+      </div>
+      <div class="control-row">
+        <label for="modelLightColor">Light Color:</label>
+        <input type="color" id="modelLightColor" value="#ffffff">
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/task2.js"></script>
+</body>
+</html>

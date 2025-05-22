@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task 4 - Model Placement</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a href="index.html" class="back-button">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 12H5M12 19l-7-7 7-7"></path>
+    </svg>
+  </a>
+  
+  <div id="controls" class="controls">
+    <div class="controls-header">
+      <h2>Model Controls</h2>
+      <button id="toggleControlsBtn" class="toggle-button">Hide Controls</button>
+    </div>
+    <div class="controls-content">
+      <button id="materialRealisticBtn" class="toggle-button">Material: Realistic (Active)</button>
+      <button id="materialGoldBtn" class="toggle-button">Material: Gold</button>
+      <button id="materialGlowBtn" class="toggle-button">Material: Glow</button>
+      <button id="materialGlassBtn" class="toggle-button">Material: Glass</button>
+      <button id="materialChromeBtn" class="toggle-button">Material: Chrome</button>
+      <button id="toggleDirectionalLightBtn" class="toggle-button">Directional Light: On</button>
+      <button id="increaseLightIntensityBtn" class="toggle-button">Light Intensity +</button>
+      <button id="decreaseLightIntensityBtn" class="toggle-button">Light Intensity -</button>
+      <button id="changeLightColorBtn" class="toggle-button">Light Color: White</button>
+      <button id="toggleJumpBtn" class="toggle-button">Jump: On</button>
+      <button id="toggleRotationBtn" class="toggle-button">Rotation: On</button>
+    </div>
+  </div>
+  
+  <audio id="placeSound" src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" preload="auto"></audio>
+
+  <script type="module" src="./js/task4.js"></script>
+</body>
+</html>
