@@ -7,52 +7,61 @@ let camera, scene, renderer;
 let reticle;
 let controller;
 let model;
-let spawnedModels = []; // Array to track all spawned models
-let loader; // GLTF Loader instance
+let spawnedModels = [];
+let loader;
 let directionalLightEnabled = true;
 let jumpEnabled = true;
 let rotationEnabled = true;
 let directionalLight;
 let lightIntensity = 3;
-let lightColors = [0xffffff, 0xffaaaa, 0xaaffaa, 0xaaaaff]; // White, red, green, blue
+let lightColors = [0xffffff, 0xffaaaa, 0xaaffaa, 0xaaaaff];
 let currentLightColorIndex = 0;
 let controlsVisible = true;
 
-// Material styles array
 const materials = {
-  realistic: null, // Realistic (with model textures)
-  gold: new THREE.MeshStandardMaterial({
-    color: 0xffd700, // Gold color
-    metalness: 0.9, // Increased for clearer reflections
-    roughness: 0.1,
+  realistic: null,
+  gold: new THREE.MeshPhysicalMaterial({
+    color: 0xffd700,
+    metalness: 1.0,
+    roughness: 0.15,
+    reflectivity: 1.0,
+    clearcoat: 0.8,
+    clearcoatRoughness: 0.1,
+    ior: 2.5,
+    envMapIntensity: 1.5
   }),
   glow: new THREE.MeshStandardMaterial({
-    color: 0x00ff00, // Green glow
+    color: 0x00ff00,
     emissive: 0x00ff00,
-    emissiveIntensity: 1.5, // Reduced to not obscure details
+    emissiveIntensity: 1.5,
     metalness: 0.3,
-    roughness: 0.3, // Reduced for clarity
+    roughness: 0.3,
   }),
   glass: new THREE.MeshPhysicalMaterial({
     transparent: true,
-    opacity: 0.5, // Increased for clarity
+    opacity: 0.5,
     metalness: 0.2,
-    roughness: 0.05, // Reduced for clearer reflections
+    roughness: 0.05,
     transmission: 0.9,
     thickness: 0.5,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.1,
+    ior: 1.5
   }),
-  chrome: new THREE.MeshStandardMaterial({
-    color: 0xffffff, // White for chrome effect
-    metalness: 1, // Maximum reflectivity
-    roughness: 0.02, // Minimum roughness for clarity
-  }),
+  chrome: new THREE.MeshPhysicalMaterial({
+    color: 0xffffff,
+    metalness: 1.0,
+    roughness: 0.05,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.05,
+    reflectivity: 1.0,
+    envMapIntensity: 2.0
+  })
 };
 
-// Save original materials for model
 const originalMaterials = new Map();
 let currentMaterial = 'realistic';
 
-// Model URL
 const modelUrl = 'https://manufactura-public.s3.us-east-1.amazonaws.com/musical/scene.gltf';
 
 init();
@@ -63,50 +72,41 @@ function init() {
   container = document.createElement('div');
   document.body.appendChild(container);
 
-  // Scene
   scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 40);
 
-  // Camera
-  camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
-
-  // Rendering
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.xr.enabled = true;
-  renderer.setClearColor(0x000000, 0); // Set clear color to transparent
-  renderer.shadowMap.enabled = true; // Enable shadows
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap; // Soft shadows
+  renderer.setClearColor(0x000000, 0);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   container.appendChild(renderer.domElement);
 
-    // Model loading will be handled by loadModel function
-
-  // Light
   directionalLight = new THREE.DirectionalLight(0xffffff, lightIntensity);
-  directionalLight.position.set(2, 3, 2); // Changed position for clearer shadows
-  directionalLight.castShadow = true; // Enable shadows
-  directionalLight.shadow.mapSize.width = 1024; // Shadow quality
+  directionalLight.position.set(2, 3, 2);
+  directionalLight.castShadow = true;
+  directionalLight.shadow.mapSize.width = 1024;
   directionalLight.shadow.mapSize.height = 1024;
   directionalLight.shadow.camera.near = 0.5;
   directionalLight.shadow.camera.far = 50;
   scene.add(directionalLight);
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Reduced intensity
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(ambientLight);
 
-  const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 0.5); // Added Hemisphere Light
+  const hemisphereLight = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 0.5);
   hemisphereLight.position.set(0, 1, 0);
   scene.add(hemisphereLight);
 
-  // Controller for adding objects
   controller = renderer.xr.getController(0);
   controller.addEventListener('select', onSelect);
   scene.add(controller);
 
-  // Add surface marker
   addReticleToScene();
 
-  // AR mode setup with hit-test
   const button = ARButton.createButton(renderer, {
     requiredFeatures: ['hit-test'],
     onSessionStarted: () => {
@@ -120,45 +120,30 @@ function init() {
   document.body.appendChild(button);
   renderer.domElement.style.display = 'block';
 
-  // Add Listener for buttons
-  document
-    .getElementById('materialRealisticBtn')
-    .addEventListener('click', () => setMaterial('realistic'));
-  document
-    .getElementById('materialGoldBtn')
-    .addEventListener('click', () => setMaterial('gold'));
-  document
-    .getElementById('materialGlowBtn')
-    .addEventListener('click', () => setMaterial('glow'));
-  document
-    .getElementById('materialGlassBtn')
-    .addEventListener('click', () => setMaterial('glass'));
-  document
-    .getElementById('materialChromeBtn')
-    .addEventListener('click', () => setMaterial('chrome'));
-  document
-    .getElementById('toggleDirectionalLightBtn')
-    .addEventListener('click', toggleDirectionalLight);
-  document
-    .getElementById('increaseLightIntensityBtn')
-    .addEventListener('click', increaseLightIntensity);
-  document
-    .getElementById('decreaseLightIntensityBtn')
-    .addEventListener('click', decreaseLightIntensity);
-  document
-    .getElementById('changeLightColorBtn')
-    .addEventListener('click', changeLightColor);
-  document
-    .getElementById('toggleJumpBtn')
-    .addEventListener('click', toggleJump);
-  document
-    .getElementById('toggleRotationBtn')
-    .addEventListener('click', toggleRotation);
-  document
-    .getElementById('toggleControlsBtn')
-    .addEventListener('click', toggleControls);
+  document.getElementById('materialRealisticBtn').addEventListener('click', () => setMaterial('realistic'));
+  document.getElementById('materialGoldBtn').addEventListener('click', () => setMaterial('gold'));
+  document.getElementById('materialGlowBtn').addEventListener('click', () => setMaterial('glow'));
+  document.getElementById('materialGlassBtn').addEventListener('click', () => setMaterial('glass'));
+  document.getElementById('materialChromeBtn').addEventListener('click', () => setMaterial('chrome'));
+  document.getElementById('toggleDirectionalLightBtn').addEventListener('click', toggleDirectionalLight);
+  document.getElementById('increaseLightIntensityBtn').addEventListener('click', increaseLightIntensity);
+  document.getElementById('decreaseLightIntensityBtn').addEventListener('click', decreaseLightIntensity);
+  document.getElementById('changeLightColorBtn').addEventListener('click', changeLightColor);
+  document.getElementById('toggleJumpBtn').addEventListener('click', toggleJump);
+  document.getElementById('toggleRotationBtn').addEventListener('click', toggleRotation);
+  document.getElementById('toggleControlsBtn').addEventListener('click', toggleControls);
 
   window.addEventListener('resize', onWindowResize, false);
+}
+
+function updateMaterialButtonStates() {
+  const materials = ['Realistic', 'Gold', 'Glow', 'Glass', 'Chrome'];
+  materials.forEach(mat => {
+    const btn = document.getElementById(`material${mat}Btn`);
+    const materialType = mat.toLowerCase();
+    btn.textContent = `Material: ${mat}${currentMaterial === materialType ? ' (Active)' : ''}`;
+    btn.classList.toggle('active', currentMaterial === materialType);
+  });
 }
 
 function addReticleToScene() {
@@ -179,31 +164,16 @@ function addReticleToScene() {
 
 function onSelect() {
   if (reticle.visible) {
-    // Create a new instance of the model at the reticle position
     if (model) {
-      // Clone the model
       const newModel = model.clone();
-      
-      // Position the new model at the reticle position
       newModel.position.setFromMatrixPosition(reticle.matrix);
       newModel.quaternion.setFromRotationMatrix(reticle.matrix);
       newModel.visible = true;
-      
-      // Ensure consistent scale for all spawned models
       newModel.scale.set(0.1, 0.1, 0.1);
-      
-      // Store base position for animations
       newModel.userData.basePosition = newModel.position.clone();
-      
-      // Add the model to the scene
       scene.add(newModel);
-      
-      // Add to our array of spawned models
       spawnedModels.push(newModel);
-      
-      // Apply current material to the new model
       applyMaterialToModel(newModel, currentMaterial);
-
     }
   }
 }
@@ -213,21 +183,13 @@ function setMaterial(type) {
   
   currentMaterial = type;
   
-  // Apply to template model
   applyMaterialToModel(model, type);
-  
-  // Apply to all spawned models
   spawnedModels.forEach(spawnedModel => {
     applyMaterialToModel(spawnedModel, type);
   });
 
-  // Update material buttons UI
-  document.querySelectorAll('.material-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-  document.getElementById(`material${type.charAt(0).toUpperCase() + type.slice(1)}Btn`).classList.add('active');
+  updateMaterialButtonStates();
 
-  // Play sound on material change
   const materialSound = document.getElementById('materialSound');
   if (materialSound) {
     materialSound.currentTime = 0;
@@ -238,19 +200,16 @@ function setMaterial(type) {
 function applyMaterialToModel(modelInstance, type) {
   if (!modelInstance) return;
   
-  // Ensure consistent scale is maintained when applying materials
   modelInstance.scale.set(0.1, 0.1, 0.1);
   
   modelInstance.traverse((child) => {
     if (child.isMesh) {
       if (type === 'realistic') {
-        // Restore original material if it exists
         const originalMaterial = originalMaterials.get(child) || originalMaterials.get(findOriginalMesh(child));
         if (originalMaterial) {
           child.material = originalMaterial.clone();
         }
       } else {
-        // Clone the material to avoid sharing materials between different meshes
         child.material = materials[type].clone();
       }
     }
@@ -264,58 +223,39 @@ function findOriginalMesh(clonedMesh) {
     }
   }
   return null;
-  document.getElementById('materialGlassBtn').textContent =
-    currentMaterial === 'glass'
-      ? 'Material: Glass (Active)'
-      : 'Material: Glass';
-  document.getElementById('materialChromeBtn').textContent =
-    currentMaterial === 'chrome'
-      ? 'Material: Chrome (Active)'
-      : 'Material: Chrome';
 }
 
 function toggleDirectionalLight() {
   directionalLightEnabled = !directionalLightEnabled;
   directionalLight.visible = directionalLightEnabled;
-  document.getElementById('toggleDirectionalLightBtn').textContent =
-    directionalLightEnabled
-      ? 'Directional Light: On'
-      : 'Directional Light: Off';
+  document.getElementById('toggleDirectionalLightBtn').textContent = directionalLightEnabled ? 'Directional Light: On' : 'Directional Light: Off';
 }
 
 function increaseLightIntensity() {
-  lightIntensity = Math.min(lightIntensity + 0.5, 5); // Max: 5
+  lightIntensity = Math.min(lightIntensity + 0.5, 5);
   directionalLight.intensity = lightIntensity;
-  console.log('Light intensity increased to', lightIntensity);
 }
 
 function decreaseLightIntensity() {
-  lightIntensity = Math.max(lightIntensity - 0.5, 0); // Min: 0
+  lightIntensity = Math.max(lightIntensity - 0.5, 0);
   directionalLight.intensity = lightIntensity;
-  console.log('Light intensity decreased to', lightIntensity);
 }
 
 function changeLightColor() {
   currentLightColorIndex = (currentLightColorIndex + 1) % lightColors.length;
   directionalLight.color.setHex(lightColors[currentLightColorIndex]);
   const colorNames = ['White', 'Red', 'Green', 'Blue'];
-  document.getElementById(
-    'changeLightColorBtn'
-  ).textContent = `Light Color: ${colorNames[currentLightColorIndex]}`;
+  document.getElementById('changeLightColorBtn').textContent = `Light Color: ${colorNames[currentLightColorIndex]}`;
 }
 
 function toggleJump() {
   jumpEnabled = !jumpEnabled;
-  document.getElementById('toggleJumpBtn').textContent = jumpEnabled
-    ? 'Jump: On'
-    : 'Jump: Off';
+  document.getElementById('toggleJumpBtn').textContent = jumpEnabled ? 'Jump: On' : 'Jump: Off';
 }
 
 function toggleRotation() {
   rotationEnabled = !rotationEnabled;
-  document.getElementById('toggleRotationBtn').textContent = rotationEnabled
-    ? 'Rotation: On'
-    : 'Rotation: Off';
+  document.getElementById('toggleRotationBtn').textContent = rotationEnabled ? 'Rotation: On' : 'Rotation: Off';
 }
 
 function toggleControls() {
@@ -333,33 +273,24 @@ function toggleControls() {
 }
 
 function loadModel(url) {
-  // Clear any previous template model
   if (model) {
     scene.remove(model);
     originalMaterials.clear();
   }
   
-  // Note: We don't remove spawned models, as they should persist
-
   loader = new GLTFLoader();
   loader.load(
     url,
     function (gltf) {
       model = gltf.scene;
-      // Hide model initially, will be shown when placed
       model.visible = false;
-      // Scale the model appropriately
       model.scale.set(0.1, 0.1, 0.1);
       scene.add(model);
 
-      // Save original materials
       model.traverse((child) => {
         if (child.isMesh) {
-          // Enable shadows
           child.castShadow = true;
           child.receiveShadow = true;
-          
-          // Store original material
           originalMaterials.set(child, child.material);
           
           if (child.material) {
@@ -382,7 +313,6 @@ function loadModel(url) {
         }
       });
 
-      // Apply current material after loading
       setMaterial(currentMaterial);
       console.log('Model loaded successfully:', url);
     },
@@ -445,9 +375,7 @@ function render(timestamp, frame) {
       }
     }
 
-    // Animations for the template model
     if (model && model.userData.basePosition) {
-      // Jump animation
       if (jumpEnabled) {
         const jumpHeight = 0.1;
         const jumpSpeed = 0.005;
@@ -457,29 +385,25 @@ function render(timestamp, frame) {
         model.position.y = model.userData.basePosition.y;
       }
 
-      // Rotation animation
       if (rotationEnabled) {
-        model.rotation.y += 0.01; // Fixed rotation speed
+        model.rotation.y += 0.01;
       }
     }
     
-    // Apply animations to all spawned models
     spawnedModels.forEach((spawnedModel, index) => {
       if (spawnedModel && spawnedModel.userData.basePosition) {
-        // Jump animation with phase offset based on index for variety
         if (jumpEnabled) {
           const jumpHeight = 0.1;
           const jumpSpeed = 0.005;
-          const phaseOffset = index * 0.5; // Different phase for each model
+          const phaseOffset = index * 0.5;
           const offsetY = Math.sin((timestamp + phaseOffset) * jumpSpeed) * jumpHeight;
           spawnedModel.position.y = spawnedModel.userData.basePosition.y + offsetY;
         } else {
           spawnedModel.position.y = spawnedModel.userData.basePosition.y;
         }
 
-        // Rotation animation
         if (rotationEnabled) {
-          spawnedModel.rotation.y += 0.01; // Fixed rotation speed
+          spawnedModel.rotation.y += 0.01;
         }
       }
     });

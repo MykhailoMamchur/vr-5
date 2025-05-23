@@ -5,7 +5,6 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 let camera, scene, renderer;
 let icosahedronMesh, torusMesh, circleMesh;
 let controls;
-let particles; // Special Effect
 let hue = 0;
 
 // Animation states
@@ -24,6 +23,13 @@ let icosahedronMaterial, icosahedronMaterialNoTexture;
 let torusMaterial, torusMaterialNoTexture;
 let circleMaterial, circleMaterialNoTexture;
 
+// Store original material properties
+const originalProperties = {
+  icosahedron: {},
+  torus: {},
+  circle: {}
+};
+
 init();
 animate();
 
@@ -41,8 +47,8 @@ function init() {
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.xr.enabled = true; // Essential line for your AR application!
-  renderer.setClearColor(0x000000, 0); // Set clear color to transparent
+  renderer.xr.enabled = true;
+  renderer.setClearColor(0x000000, 0);
   container.appendChild(renderer.domElement);
 
   // Light
@@ -91,6 +97,13 @@ function init() {
   icosahedronMesh.position.set(-1.5, 0, -5);
   scene.add(icosahedronMesh);
 
+  // Store original properties
+  originalProperties.icosahedron = {
+    opacity: icosahedronMaterial.opacity,
+    emissiveIntensity: icosahedronMaterial.emissiveIntensity || 0,
+    transmission: icosahedronMaterial.transmission
+  };
+
   // 2. Torus
   const torusGeometry = new THREE.TorusGeometry(0.4, 0.2, 16, 100);
   torusMaterial = new THREE.MeshStandardMaterial({
@@ -108,6 +121,12 @@ function init() {
   torusMesh = new THREE.Mesh(torusGeometry, torusMaterial);
   torusMesh.position.set(0, 0, -5);
   scene.add(torusMesh);
+
+  // Store original properties
+  originalProperties.torus = {
+    emissiveIntensity: torusMaterial.emissiveIntensity || 0,
+    metalness: torusMaterial.metalness
+  };
 
   // 3. Circle
   const circleGeometry = new THREE.CircleGeometry(0.6, 32);
@@ -131,8 +150,11 @@ function init() {
   circleMesh.position.set(1.5, 0, -5);
   scene.add(circleMesh);
 
-  // Special Effect
-  createParticles();
+  // Store original properties
+  originalProperties.circle = {
+    emissiveIntensity: circleMaterial.emissiveIntensity,
+    metalness: circleMaterial.metalness
+  };
 
   // Camera position
   camera.position.z = 3;
@@ -181,40 +203,6 @@ function init() {
     .addEventListener('click', toggleControls);
 
   window.addEventListener('resize', onWindowResize, false);
-}
-
-// Special Effect
-function createParticles() {
-  const particleGeometry = new THREE.BufferGeometry();
-  const particleCount = 300;
-  const positions = new Float32Array(particleCount * 3);
-  const colors = new Float32Array(particleCount * 3);
-
-  for (let i = 0; i < particleCount; i++) {
-    positions[i * 3] = (Math.random() - 0.5) * 10;
-    positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 10 - 8;
-
-    colors[i * 3] = Math.random();
-    colors[i * 3 + 1] = Math.random();
-    colors[i * 3 + 2] = Math.random();
-  }
-
-  particleGeometry.setAttribute(
-    'position',
-    new THREE.BufferAttribute(positions, 3)
-  );
-  particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-  const particleMaterial = new THREE.PointsMaterial({
-    size: 0.1,
-    vertexColors: true,
-    transparent: true,
-    opacity: 0,
-  });
-
-  particles = new THREE.Points(particleGeometry, particleMaterial);
-  scene.add(particles);
 }
 
 function toggleRotation() {
@@ -273,7 +261,6 @@ function toggleDirection() {
 function triggerSpecialEffect() {
   specialEffectActive = true;
   specialEffectTimer = 0;
-  particles.material.opacity = 1;
 }
 
 function toggleControls() {
@@ -357,13 +344,53 @@ function animateObjects(timestamp) {
       1.5 + Math.sin(timestamp * 0.003 * speed * specialSpeed);
   }
 
-  // Particles animation
+  // Special Effect (Flicker)
   if (specialEffectActive) {
-    specialEffectTimer += 0.1 * speed * specialSpeed;
-    particles.material.opacity = Math.max(0, 1 - specialEffectTimer / 5);
-    if (specialEffectTimer >= 5) {
+    specialEffectTimer += 0.1;
+    
+    // Random flicker values
+    const flickerOpacity = Math.random() * 0.5 + 0.5;
+    const flickerEmissive = Math.random() * 3;
+    const flickerMetalness = Math.random();
+    
+    // Apply flicker to Icosahedron
+    if (icosahedronMesh.material.opacity !== undefined) {
+      icosahedronMesh.material.opacity = flickerOpacity;
+      icosahedronMesh.material.transmission = flickerOpacity * 0.6;
+    }
+    
+    // Apply flicker to Torus
+    if (torusMesh.material.emissiveIntensity !== undefined) {
+      torusMesh.material.emissiveIntensity = flickerEmissive;
+      torusMesh.material.metalness = flickerMetalness;
+    }
+    
+    // Apply flicker to Circle
+    if (circleMesh.material.emissiveIntensity !== undefined) {
+      circleMesh.material.emissiveIntensity = flickerEmissive;
+      circleMesh.material.metalness = flickerMetalness;
+    }
+    
+    // Reset after 2 seconds
+    if (specialEffectTimer >= 20) {
       specialEffectActive = false;
-      particles.material.opacity = 0;
+      specialEffectTimer = 0;
+      
+      // Reset to original properties
+      if (icosahedronMesh.material.opacity !== undefined) {
+        icosahedronMesh.material.opacity = originalProperties.icosahedron.opacity;
+        icosahedronMesh.material.transmission = originalProperties.icosahedron.transmission;
+      }
+      
+      if (torusMesh.material.emissiveIntensity !== undefined) {
+        torusMesh.material.emissiveIntensity = originalProperties.torus.emissiveIntensity;
+        torusMesh.material.metalness = originalProperties.torus.metalness;
+      }
+      
+      if (circleMesh.material.emissiveIntensity !== undefined) {
+        circleMesh.material.emissiveIntensity = originalProperties.circle.emissiveIntensity;
+        circleMesh.material.metalness = originalProperties.circle.metalness;
+      }
     }
   }
 }
